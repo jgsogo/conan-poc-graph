@@ -29,10 +29,10 @@ class BFSBuilderEx1(BFSBuilder):
                 pass
             elif require.type == RequireType.overrides:
                 # Overrides: add to graph, but not to queue
-                self.graph.add_node(require.name, color=color)
+                self.graph.add_node(require.name, color='grey')
             elif require.type == RequireType.options:
                 # Options: add to graph, but not to queue
-                self.graph.add_node(require.name, color=color)
+                self.graph.add_node(require.name, color='grey')
             else:
                 raise NotImplementedError(f"Behaviour for require type '{require.type}'"
                                           f" not implemented")
