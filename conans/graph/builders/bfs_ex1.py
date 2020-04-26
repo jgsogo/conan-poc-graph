@@ -1,15 +1,12 @@
 import logging
 
-from .bfs import BFSBuilder, Require, RequireType
+from .bfs import BFSBuilder
+from ..proxy_types import RequireType
 
 log = logging.getLogger(__name__)
 
 
 class BFSBuilderEx1(BFSBuilder):
-
-    def __init__(self, vertex: str, *args, **kwargs):
-        super().__init__(vertex, *args, **kwargs)
-        self.graph.add_node(vertex)
 
     def discover_vertex(self, vertex: str):
         log.debug(f"BFSBuilder::discover_vertex(conanfile='{vertex}')")
@@ -60,6 +57,7 @@ class BFSBuilderEx1(BFSBuilder):
 
     def _prune(self, vertex: str, raise_if_pruning: str):
         log.debug(f"BFSBuilder::_prune(vertex='{vertex}', raise_if_pruning='{raise_if_pruning}')")
+
         # We've discovered this vertex from another branch in the graph, it can potentially
         #   be resolved to a different version and have a different set of requirements/overrides,
         #   options,... we need to build again all this branch
@@ -69,6 +67,7 @@ class BFSBuilderEx1(BFSBuilder):
                 for it in collect_branch_nodes(target):
                     yield it
                 yield target
+
         branch_nodes = set(list(collect_branch_nodes(vertex)))
 
         if raise_if_pruning in branch_nodes:

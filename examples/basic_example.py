@@ -1,12 +1,10 @@
 import os
 import sys
+from typing import List, Tuple
 
 import networkx as nx
-from conans.graph import Graph
-from typing import List, Dict, Tuple
+from conans.graph.builders import bfs_builder, BFSBuilderEx1
 from conans.graph.proxy_types import Require, Provider
-
-from conans.graph.builders.bfs_ex1 import BFSBuilderEx1
 
 
 class ConanFileExample:
@@ -52,7 +50,7 @@ def main(filename):
     reporting conflicts
     """
     provider = ProviderExample(input_graph)
-    graph = Graph.build(provider, root, builder_class=BFSBuilderEx1)
+    graph = bfs_builder(root, provider, builder_class=BFSBuilderEx1)
     nx.drawing.nx_agraph.write_dot(graph, "output.dot")
 
 

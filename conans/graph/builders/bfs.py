@@ -1,8 +1,8 @@
-from .base import BaseBuilder
-from ..proxy_types import ConanFile, Require, RequireType
-from typing import List, Dict
-
 import logging
+from typing import List
+
+from .base import BaseBuilder
+from ..proxy_types import Require
 
 log = logging.getLogger(__name__)
 
@@ -15,22 +15,17 @@ class BFSBuilder(BaseBuilder):
     """
     _queue: List[str] = []
 
-    def __init__(self, vertex: str, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._start = vertex
-
     def _append(self, vertex: str) -> None:
         self._queue.append(vertex)
         self.discover_vertex(vertex)
         self.graph.nodes[vertex]['color'] = 'gray'
 
-    def run(self):
+    def run(self, start_vertex: str):
         # 1. Initialize all vertices
-        self._queue.clear()
-        # TODO: All nodes to white
+        self._queue.clear()  # TODO: All nodes to white
 
         # 2. Append initial vertex
-        self._append(self._start)  # TODO: If we enter in functional, this should be outside
+        self._append(start_vertex)
 
         # Iterate the queue
         while self._queue:
