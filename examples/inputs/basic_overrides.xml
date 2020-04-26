@@ -18,6 +18,10 @@
             <data key="type">requires</data>
             <data key="version">1.0</data>
         </edge>
+        <edge source="root" target="missing">
+            <data key="type">overrides</data>
+            <data key="version">1.0</data>
+        </edge>
         <edge source="lib3" target="lib2">
             <data key="type">requires</data>
             <data key="version">1.0</data>

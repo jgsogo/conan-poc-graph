@@ -25,7 +25,7 @@ class Require:
     enabled: bool = True
 
     def __str__(self):
-        return f"{self.name}/{self.version_expr} ({self.type})"
+        return f"{self.name}/{self.version_expr} ({self.type.name})"
 
 
 class ConanFile:

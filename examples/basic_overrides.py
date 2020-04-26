@@ -35,7 +35,7 @@ if __name__ == '__main__':
                         help="increases log verbosity for each occurence.")
     arguments = parser.parse_args(sys.argv[1:])
 
-    logging.basicConfig(stream=sys.stderr, level=logging.DEBUG,
+    logging.basicConfig(stream=sys.stderr, level=logging.INFO,
                         format='%(name)s (%(levelname)s): %(message)s')
     log = logging.getLogger('conans')
     log.setLevel(max(3 - arguments.verbose_count, 0) * 10)

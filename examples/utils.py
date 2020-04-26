@@ -27,8 +27,8 @@ class ProviderExample(Provider):
         self.graph = g
 
     def get_conanfile(self, name: str, constraints: List[Tuple[str, Require]]) -> ConanFileExample:
-        log.info(f"ProviderExample::get_conanfile(name='{name}', constraints[{len(constraints)}])")
+        log.debug(f"ProviderExample::get_conanfile(name='{name}', constraints[{len(constraints)}])")
         for ori, req in constraints:
-            log.info(f" - {req.type}: {ori} -> {req.name}/{req.version_expr}")
+            log.debug(f" - {req.type}: {ori} -> {req.name}/{req.version_expr}")
 
         return ConanFileExample(name, self.graph)

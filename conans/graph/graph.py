@@ -21,7 +21,11 @@ class Graph(nx.DiGraph):
         self.graph['graph'] = {'rankdir': 'BT'}
         # Add labels to all the graphs
         for node in self.nodes:
-            self.nodes[node]['label'] = str(self.nodes[node]['conanfile'])
+            if 'conanfile' in self.nodes[node]:
+                self.nodes[node]['label'] = str(self.nodes[node]['conanfile'])
+            else:
+                self.nodes[node]['style'] = "dotted"
+
         for edge in self.edges:
             require = self.edges[edge]['require']
 

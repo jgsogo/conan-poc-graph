@@ -1,6 +1,6 @@
 import logging
 from collections import defaultdict
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 
 import networkx as nx
 
@@ -17,6 +17,9 @@ class BFSBuilderEx1(BFSBuilder):
         # We are going to populate the graph based on the Conan information, so
         # the algorithm can keep running
         conanfile = self._get_conanfile(vertex)
+        if not conanfile:
+            return
+
         self.graph.nodes[vertex]['conanfile'] = conanfile
         for require in conanfile.get_requires():
             node_already_in_graph = self.graph.has_node(require.name)
@@ -29,10 +32,10 @@ class BFSBuilderEx1(BFSBuilder):
                 pass
             elif require.type == RequireType.overrides:
                 # Overrides: add to graph, but not to queue
-                self.graph.add_node(require.name, color='grey')
+                self.graph.add_node(require.name, color=color)
             elif require.type == RequireType.options:
                 # Options: add to graph, but not to queue
-                self.graph.add_node(require.name, color='grey')
+                self.graph.add_node(require.name, color=color)
             else:
                 raise NotImplementedError(f"Behaviour for require type '{require.type}'"
                                           f" not implemented")
@@ -44,8 +47,7 @@ class BFSBuilderEx1(BFSBuilder):
         #  prune that branch of the graph just in case this new requirement would have resulted
         #  in a different conanfile.
         if target not in self._queue:
-            self._prune(target,
-                        raise_if_pruning=origin)  # TODO: Optimization, check if the new require is going to modify anything (keep this minimal, implement in a child)
+            self._prune(target, raise_if_pruning=origin)  # TODO: Optimization, check if the new require is going to modify anything (keep this minimal, implement in a child)
             self._append(target)
 
     def _prune(self, vertex: str, raise_if_pruning: str):
@@ -70,16 +72,27 @@ class BFSBuilderEx1(BFSBuilder):
         self._queue = [it for it in self._queue if it not in branch_nodes]
         self.graph.remove_nodes_from(branch_nodes)
 
-    def _get_conanfile(self, vertex: str) -> ConanFile:
+    def _get_conanfile(self, vertex: str) -> Optional[ConanFile]:
         """ Resolve precedence between requires, those closer to root take precedence
             (steps according to 'requires' relation)
         """
+        in_edges = self.graph.in_edges(vertex, data='require')
+        # Handle corner-case for the rootnode
+        if not in_edges:
+            return self.provider.get_conanfile(vertex, [])
 
         # Get the requirements we should consider (only enabled ones)
+        is_required = False
         requires: Dict[str, List[Require]] = defaultdict(list)
         for ori, _, require in self.graph.in_edges(vertex, data='require'):
+            if require.type == RequireType.requires:
+                is_required = True
             if require.enabled:
                 requires[ori].append(require)
+
+        # If there is no 'requires' relation, no actual ConanFile to use
+        if not is_required:
+            return None
 
         # We need to consider all the topological orderings and check they resolve to the same
         #  conanfile, otherwise we have an ambiguity that should be reported as a conflict.
@@ -106,6 +119,7 @@ class BFSBuilderEx1(BFSBuilder):
                         overridden = True
                     else:
                         requires_given_order.append((it, require))
+
             conanfile = self.provider.get_conanfile(vertex, requires_given_order)
             candidate_conanfiles.append(conanfile)
 
