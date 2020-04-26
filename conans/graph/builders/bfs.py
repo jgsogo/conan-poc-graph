@@ -14,9 +14,9 @@ class BFSBuilder(BaseBuilder):
         super().__init__(*args, **kwargs)
         self._start = vertex
 
-    def _append(self, vertex_id: str, conanfile: ConanFile = None) -> None:
-        self._queue.append(vertex_id)
-        self.discover_vertex(vertex_id)
+    def _append(self, vertex: str) -> None:
+        self._queue.append(vertex)
+        self.discover_vertex(vertex)
 
     def _pop(self) -> str:
         vertex: str = self._queue.pop(0)
@@ -47,7 +47,6 @@ class BFSBuilder(BaseBuilder):
 
     def examine_vertex(self, conanfile: str):
         log.debug(f"BFSBuilder::examine_vertex(conanfile='{conanfile}')")
-        self.graph.add_node(conanfile, conanfile=conanfile)
 
     def finish_vertex(self, conanfile: str):
         log.debug(f"BFSBuilder::finish_vertex(conanfile='{conanfile}')")
