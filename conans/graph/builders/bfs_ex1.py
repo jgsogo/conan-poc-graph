@@ -33,9 +33,6 @@ class BFSBuilderEx1(BFSBuilder):
             elif require.type == RequireType.overrides:
                 # Overrides: add to graph, but not to queue
                 self.graph.add_node(require.name, color=color)
-            elif require.type == RequireType.options:
-                # Options: add to graph, but not to queue
-                self.graph.add_node(require.name, color=color)
             else:
                 raise NotImplementedError(f"Behaviour for require type '{require.type}'"
                                           f" not implemented")
@@ -81,14 +78,13 @@ class BFSBuilderEx1(BFSBuilder):
         if not in_edges:
             return self.provider.get_conanfile(vertex, [])
 
-        # Get the requirements we should consider (only enabled ones)
+        # Check if someone actually 'requires' this node
         is_required = False
         requires: Dict[str, List[Require]] = defaultdict(list)
-        for ori, _, require in self.graph.in_edges(vertex, data='require'):
+        for ori, _, require in in_edges:
             if require.type == RequireType.requires:
                 is_required = True
-            if require.enabled:
-                requires[ori].append(require)
+            requires[ori].append(require)
 
         # If there is no 'requires' relation, no actual ConanFile to use
         if not is_required:
@@ -96,39 +92,22 @@ class BFSBuilderEx1(BFSBuilder):
 
         # We need to consider all the topological orderings and check they resolve to the same
         #  conanfile, otherwise we have an ambiguity that should be reported as a conflict.
-        to_disable = []
         candidate_conanfiles: List[ConanFile] = []
         for topo_order in nx.all_topological_sorts(self.graph):
             log.info(f"Topological order: f{topo_order}")
             requires_given_order: List[Tuple[str, Require]] = []
-            overridden = False
             for it in topo_order:
                 if it == vertex:  # Optimization
                     break
                 for require in requires.get(it, []):
-                    if require.type == RequireType.requires:
-                        if overridden:
-                            to_disable.append(require)
-                        else:
-                            requires_given_order.append((it, require))
-                    elif require.type == RequireType.overrides:
-                        if overridden:
-                            to_disable.append(require)
-                        else:
-                            requires_given_order.append((it, require))
-                        overridden = True
-                    else:
+                    if require.type in [RequireType.requires, RequireType.overrides]:
                         requires_given_order.append((it, require))
+                    else:
+                        raise NotImplementedError
 
             conanfile = self.provider.get_conanfile(vertex, requires_given_order)
             candidate_conanfiles.append(conanfile)
 
         # Validate that we get the same conanfile
         assert len(set(candidate_conanfiles)) == 1, "Multiple conanfiles --> ambiguity!"
-        conanfile = candidate_conanfiles[0]
-
-        # Disable requirements
-        for it in to_disable:
-            it.enabled = False
-
-        return conanfile
+        return candidate_conanfiles[0]

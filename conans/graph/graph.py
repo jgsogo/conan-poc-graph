@@ -20,11 +20,6 @@ class Graph(nx.DiGraph):
     def write_dot(self, output: str):
         self.graph['graph'] = {'rankdir': 'BT'}
         # Add labels to all the graphs
-        for node in self.nodes:
-            if 'conanfile' in self.nodes[node]:
-                self.nodes[node]['label'] = str(self.nodes[node]['conanfile'])
-            else:
-                self.nodes[node]['style'] = "dotted"
 
         for edge in self.edges:
             require = self.edges[edge]['require']
@@ -40,5 +35,13 @@ class Graph(nx.DiGraph):
             self.edges[edge]['style'] = style
             self.edges[edge]['color'] = color
             self.edges[edge]['label'] = str(require)
+
+        for node in self.nodes:
+            if 'conanfile' in self.nodes[node]:
+                self.nodes[node]['label'] = str(self.nodes[node]['conanfile'])
+            else:
+                self.nodes[node]['style'] = "dotted"
+                for ori, _ in self.in_edges(node, data=False):
+                    self.edges[ori, node]['style'] = "dotted"
 
         nx.drawing.nx_agraph.write_dot(self, output)

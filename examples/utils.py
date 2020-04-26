@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 from typing import List, Tuple
 
 import networkx as nx
@@ -14,19 +15,21 @@ class ConanFileExample(ConanFile):
         self.name = name
 
     def get_requires(self) -> List[Require]:
+        requires = defaultdict(Require)
         for _, target, data in self._graph.out_edges(self.name, data=True):
-            require = Require()
+            require = requires[target]
             require.type = RequireType[data['type']]
             require.name = target
-            if require.type in [RequireType.requires, RequireType.overrides]:
+            if 'version' in data:
                 require.version_expr = data['version']
-            elif require.type == RequireType.options:
+            if 'options' in data:
                 options = {}
                 for opt in data['options'].split(';'):
                     key, value = opt.split('=')
                     options[key] = value
                 require.options = options
-            yield require
+
+        return requires.values()
 
 
 class ProviderExample(Provider):
@@ -42,14 +45,26 @@ class ProviderExample(Provider):
         versions_available = self.available_recipes[name]
         version_selected = None
         overriden = False
+        options = {}
+
+        def add_options(opts):
+            for key, value in opts.items():
+                options[key] = options.get(key, value)
+
         for _, require in constraints:
+            assert require.version_expr in versions_available
+            add_options(require.options)
             if require.type == RequireType.overrides:
-                assert require.version_expr in versions_available
-                version_selected = require.version_expr
+                if not overriden:
+                    version_selected = require.version_expr
+                else:
+                    require.enabled = False
                 overriden = True
             elif require.type == RequireType.requires:
-                assert not overriden, "Do not expect a requires after an override"
-                version_selected = require.version_expr
+                if not overriden:
+                    version_selected = require.version_expr
 
         assert version_selected in versions_available, f"{version_selected} not found in {versions_available}"
-        return ConanFileExample(name=name, version=version_selected, graph=self.graph)
+        conanfile = ConanFileExample(name=name, version=version_selected, graph=self.graph)
+        conanfile.options = options
+        return conanfile

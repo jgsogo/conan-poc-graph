@@ -14,41 +14,45 @@ class RequireType(Enum):
     requires = 1
     context_switch = 2
     overrides = 3
-    options = 4
+    # TODO: Need a better classification here
 
 
 class Require:
     type: RequireType = None
     name: str
 
-    version_expr: str
+    version_expr: str = ""
     options: Dict[str, str] = {}
 
     enabled: bool = True
 
     def __str__(self):
-        if self.type in [RequireType.requires, RequireType.overrides]:
+        if self.options:
+            return f"{self.name}/{self.version_expr} ({self.type.name}, {self.options})"
+        else:
             return f"{self.name}/{self.version_expr} ({self.type.name})"
-        elif self.type == RequireType.options:
-            return str(self.options)
 
 
 class ConanFile:
     name: str
     version: str
+    options: Dict[str, str] = {}
 
     def __init__(self, name, version):
         self.name = name
         self.version = version
 
     def __str__(self):
-        return f"{self.name}/{self.version}"
+        if self.options:
+            return f"{self.name}/{self.version}\n{self.options}"
+        else:
+            return f"{self.name}/{self.version}"
 
     def __hash__(self):
         return hash(self.name) ^ hash(self.version)
 
     def __eq__(self, other: "ConanFile") -> bool:
-        return self.name == other.name and self.version == other.version
+        return self.name == other.name and self.version == other.version and self.options == other.options
 
     def get_requires(self) -> List[Require]:
         raise NotImplementedError
