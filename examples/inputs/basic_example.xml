@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns
+     http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <graph id="basic_example" edgedefault="directed">
+    <node id="root"/>
+    <node id="level1_lib1"/>
+    <node id="level1_lib2"/>
+    <node id="level1_lib3"/>
+    <node id="level2_lib1"/>
+    <node id="level2_lib2"/>
+    <node id="level3_lib1"/>
+    <edge source="root" target="level1_lib1"/>
+    <edge source="root" target="level1_lib2"/>
+    <edge source="root" target="level1_lib3"/>
+    <edge source="level1_lib1" target="level2_lib1"/>
+    <edge source="level1_lib2" target="level2_lib1"/>
+    <edge source="level1_lib3" target="level2_lib2"/>
+    <edge source="level2_lib1" target="level3_lib1"/>
+    <edge source="level2_lib2" target="level3_lib1"/>
+  </graph>
+</graphml>
