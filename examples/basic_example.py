@@ -40,8 +40,8 @@ class ProviderExample(Provider):
 
 def main(filename):
     input_graph = nx.read_graphml(filename)
-    root = next(nx.topological_sort(input_graph))
     nx.drawing.nx_agraph.write_dot(input_graph, "input.dot")
+    root = next(nx.topological_sort(input_graph))
 
     """
     STEP 1
