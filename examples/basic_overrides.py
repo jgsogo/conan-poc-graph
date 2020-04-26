@@ -3,12 +3,13 @@ import sys
 
 import networkx as nx
 from conans.graph.builders import bfs_builder, BFSBuilderEx1
-
+import json
 from .utils import ProviderExample
 
 
-def main(filename):
-    input_graph = nx.read_graphml(filename)
+def main(graphml, jsonfile):
+    available_recipes = json.load(open(jsonfile))
+    input_graph = nx.read_graphml(graphml)
     nx.drawing.nx_agraph.write_dot(input_graph, "input.dot")
     root = next(nx.topological_sort(input_graph))
 
@@ -18,7 +19,7 @@ def main(filename):
     Build the graph of nodes resolving version ranges and overrides and
     reporting conflicts
     """
-    provider = ProviderExample(input_graph)
+    provider = ProviderExample(input_graph, available_recipes)
     graph = bfs_builder(root, provider, builder_class=BFSBuilderEx1)
     graph.write_dot("output.dot")
 
@@ -40,7 +41,12 @@ if __name__ == '__main__':
     log = logging.getLogger('conans')
     log.setLevel(max(3 - arguments.verbose_count, 0) * 10)
 
-    filename = os.path.abspath(
+    graphml = os.path.abspath(
         os.path.join(os.path.dirname(__file__), 'inputs', 'basic_overrides.xml'))
-    sys.stdout.write(f"Work on file: {filename}\n")
-    main(filename)
+    jsonfile = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), 'inputs', 'basic_overrides.json'))
+
+    sys.stdout.write(f"Work on file:\n")
+    sys.stdout.write(f" - GraphML: '{graphml}'\n")
+    sys.stdout.write(f" - JSON: '{jsonfile}'\n")
+    main(graphml, jsonfile)
