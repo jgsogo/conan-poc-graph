@@ -54,11 +54,11 @@ class BFSBuilder(BaseBuilder):
     def finish_vertex(self, vertex: str):
         log.debug(f"BFSBuilder::finish_vertex(vertex='{vertex}')")
 
-    def examine_edge(self, origin: str, requires: Require):
-        log.debug(f"BFSBuilder::examine_edge(origin='{origin}', requires='{requires.name}')")
+    def examine_edge(self, origin: str, target: str):
+        log.debug(f"BFSBuilder::examine_edge(origin='{origin}', requires='{target}')")
 
-    def tree_edge(self, origin: str, requires: Require):
-        log.debug(f"BFSBuilder::tree_edge(origin='{origin}', requires='{requires.name}')")
+    def tree_edge(self, origin: str, target: str):
+        log.debug(f"BFSBuilder::tree_edge(origin='{origin}', requires='{target}')")
 
-    def non_tree_edge(self, origin: str, requires: Require):
-        log.debug(f"BFSBuilder::non_tree_edge(origin='{origin}', requires='{requires.name}')")
+    def non_tree_edge(self, origin: str, target: str):
+        log.debug(f"BFSBuilder::non_tree_edge(origin='{origin}', requires='{target}')")

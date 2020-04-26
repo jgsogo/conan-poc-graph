@@ -1,22 +1,23 @@
 import logging
+from collections import defaultdict
+from typing import List, Tuple, Dict
+
+import networkx as nx
 
 from .bfs import BFSBuilder
-from ..proxy_types import RequireType
+from ..proxy_types import RequireType, Require, ConanFile
 
 log = logging.getLogger(__name__)
 
 
 class BFSBuilderEx1(BFSBuilder):
 
-    def discover_vertex(self, vertex: str):
-        log.debug(f"BFSBuilder::discover_vertex(conanfile='{vertex}')")
-
     def examine_vertex(self, vertex: str):
         log.debug(f"BFSBuilder::examine_vertex(conanfile='{vertex}')")
         # We are going to populate the graph based on the Conan information, so
         # the algorithm can keep running
-        requires = [(ori, req) for ori, _, req in self.graph.in_edges(vertex, data='require')]
-        conanfile = self.provider.get_conanfile(vertex, requires)
+        conanfile = self._get_conanfile(vertex)
+        self.graph.nodes[vertex]['conanfile'] = conanfile
         for require in conanfile.get_requires():
             node_already_in_graph = self.graph.has_node(require.name)
             color = self.graph.nodes[require.name]['color'] if node_already_in_graph else 'white'
@@ -35,16 +36,7 @@ class BFSBuilderEx1(BFSBuilder):
             else:
                 raise NotImplementedError(f"Behaviour for require type '{require.type}'"
                                           f" not implemented")
-            self.graph.add_edge(vertex, require.name, require=require, label=str(require))
-
-    def finish_vertex(self, conanfile: str):
-        log.debug(f"BFSBuilder::finish_vertex(conanfile='{conanfile}')")
-
-    def examine_edge(self, origin: str, target: str):
-        log.debug(f"BFSBuilder::examine_edge(origin='{origin}', require='{target}')")
-
-    def tree_edge(self, origin: str, target: str):
-        log.debug(f"BFSBuilder::tree_edge(origin='{origin}', require='{target}')")
+            self.graph.add_edge(vertex, require.name, require=require)
 
     def non_tree_edge(self, origin: str, target: str):
         log.debug(f"BFSBuilder::non_tree_edge(origin='{origin}', requires='{target}')")
@@ -52,7 +44,8 @@ class BFSBuilderEx1(BFSBuilder):
         #  prune that branch of the graph just in case this new requirement would have resulted
         #  in a different conanfile.
         if target not in self._queue:
-            self._prune(target, raise_if_pruning=origin)  # TODO: Optimization, check if the new require is going to modify anything (keep this minimal, implement in a child)
+            self._prune(target,
+                        raise_if_pruning=origin)  # TODO: Optimization, check if the new require is going to modify anything (keep this minimal, implement in a child)
             self._append(target)
 
     def _prune(self, vertex: str, raise_if_pruning: str):
@@ -76,3 +69,52 @@ class BFSBuilderEx1(BFSBuilder):
         # Remove these nodes from the queue and from the graph
         self._queue = [it for it in self._queue if it not in branch_nodes]
         self.graph.remove_nodes_from(branch_nodes)
+
+    def _get_conanfile(self, vertex: str) -> ConanFile:
+        """ Resolve precedence between requires, those closer to root take precedence
+            (steps according to 'requires' relation)
+        """
+
+        # Get the requirements we should consider (only enabled ones)
+        requires: Dict[str, List[Require]] = defaultdict(list)
+        for ori, _, require in self.graph.in_edges(vertex, data='require'):
+            if require.enabled:
+                requires[ori].append(require)
+
+        # We need to consider all the topological orderings and check they resolve to the same
+        #  conanfile, otherwise we have an ambiguity that should be reported as a conflict.
+        to_disable = []
+        candidate_conanfiles: List[ConanFile] = []
+        for topo_order in nx.all_topological_sorts(self.graph):
+            log.info(f"Topological order: f{topo_order}")
+            requires_given_order: List[Tuple[str, Require]] = []
+            overridden = False
+            for it in topo_order:
+                if it == vertex:  # Optimization
+                    break
+                for require in requires.get(it, []):
+                    if require.type == RequireType.requires:
+                        if overridden:
+                            to_disable.append(require)
+                        else:
+                            requires_given_order.append((it, require))
+                    elif require.type == RequireType.overrides:
+                        if overridden:
+                            to_disable.append(require)
+                        else:
+                            requires_given_order.append((it, require))
+                        overridden = True
+                    else:
+                        requires_given_order.append((it, require))
+            conanfile = self.provider.get_conanfile(vertex, requires_given_order)
+            candidate_conanfiles.append(conanfile)
+
+        # Validate that we get the same conanfile
+        assert len(set(candidate_conanfiles)) == 1, "Multiple conanfiles --> ambiguity!"
+        conanfile = candidate_conanfiles[0]
+
+        # Disable requirements
+        for it in to_disable:
+            it.enabled = False
+
+        return conanfile
