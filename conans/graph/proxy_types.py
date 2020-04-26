@@ -18,14 +18,19 @@ class RequireType(Enum):
 
 
 class Require:
+    type: RequireType = None
     name: str
+
     version_expr: str
-    type: RequireType = RequireType.requires
+    options: Dict[str, str] = {}
 
     enabled: bool = True
 
     def __str__(self):
-        return f"{self.name}/{self.version_expr} ({self.type.name})"
+        if self.type in [RequireType.requires, RequireType.overrides]:
+            return f"{self.name}/{self.version_expr} ({self.type.name})"
+        elif self.type == RequireType.options:
+            return str(self.options)
 
 
 class ConanFile:

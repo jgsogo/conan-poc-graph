@@ -18,7 +18,14 @@ class ConanFileExample(ConanFile):
             require = Require()
             require.type = RequireType[data['type']]
             require.name = target
-            require.version_expr = data['version']
+            if require.type in [RequireType.requires, RequireType.overrides]:
+                require.version_expr = data['version']
+            elif require.type == RequireType.options:
+                options = {}
+                for opt in data['options'].split(';'):
+                    key, value = opt.split('=')
+                    options[key] = value
+                require.options = options
             yield require
 
 
