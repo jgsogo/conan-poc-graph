@@ -3,7 +3,7 @@ import sys
 
 import networkx as nx
 from conans.graph import Graph
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from conans.graph.proxy_types import Require, Provider
 
 from conans.graph.builders.bfs_ex1 import BFSBuilderEx1
@@ -33,8 +33,10 @@ class ProviderExample(Provider):
     def __init__(self, g: nx.DiGraph):
         self.graph = g
 
-    def get_conanfile(self, name: str, version_expr: Dict[str, Require]) -> ConanFileExample:
-        log.info(f"ProviderExample::get_conanfile(name='{name}')")
+    def get_conanfile(self, name: str, constraints: List[Tuple[str, Require]]) -> ConanFileExample:
+        log.info(f"ProviderExample::get_conanfile(name='{name}', constraints)")
+        for ori, req in constraints:
+            log.info(f" - {req.type}: {ori} -> {req.name}/{req.version_expr}")
         return ConanFileExample(name, self.graph)
 
 
