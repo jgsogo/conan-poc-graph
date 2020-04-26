@@ -52,7 +52,7 @@ class BFSBuilderEx1(BFSBuilder):
         #  prune that branch of the graph just in case this new requirement would have resulted
         #  in a different conanfile.
         if target not in self._queue:
-            self._prune(target, raise_if_pruning=origin)
+            self._prune(target, raise_if_pruning=origin)  # TODO: Optimization, check if the new require is going to modify anything (keep this minimal, implement in a child)
             self._append(target)
 
     def _prune(self, vertex: str, raise_if_pruning: str):

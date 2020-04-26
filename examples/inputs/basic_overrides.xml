@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns
+     http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <graph id="basic_example" edgedefault="directed">
+    <node id="root"/>
+    <node id="lib1"/>
+    <node id="lib2"/>
+    <edge source="root" target="lib1" type="overrides" require="lib1/2.0"/>
+    <edge source="root" target="lib2"/>
+    <edge source="lib2" target="lib1" type="requires" require="lib1/1.0"/>
+  </graph>
+</graphml>
