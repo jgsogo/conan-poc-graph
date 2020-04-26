@@ -20,7 +20,7 @@ def main(filename):
     """
     provider = ProviderExample(input_graph)
     graph = bfs_builder(root, provider, builder_class=BFSBuilderEx1)
-    nx.drawing.nx_agraph.write_dot(graph, "output.dot")
+    graph.write_dot("output.dot")
 
 
 if __name__ == '__main__':
