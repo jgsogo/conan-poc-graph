@@ -1,6 +1,8 @@
 import logging
 from typing import List
 
+import networkx as nx
+
 from .base import BaseBuilder
 from ..proxy_types import Require
 
@@ -22,7 +24,8 @@ class BFSBuilder(BaseBuilder):
 
     def run(self, start_vertex: str):
         # 1. Initialize all vertices
-        self._queue.clear()  # TODO: All nodes to white
+        self._queue.clear()
+        nx.set_node_attributes(self.graph, 'color', 'white')
 
         # 2. Append initial vertex
         self._append(start_vertex)
