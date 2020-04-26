@@ -3,13 +3,15 @@ import networkx as nx
 from .builders import BaseBuilder, BFSBuilder
 # from .node import Node
 from .proxy_types import ConanFile, Provider
+from typing import Type
 
 
 class Graph(nx.DiGraph):
     context: int
 
     @classmethod
-    def build(cls, provider: Provider, root: str, context: int = 0, builder_class: BaseBuilder = BFSBuilder):
+    def build(cls, provider: Type[Provider], root: str, context: int = 0,
+              builder_class: Type[BaseBuilder] = BFSBuilder):
         g = Graph(context=context)
         builder = builder_class(root, g, provider)
         builder.run()

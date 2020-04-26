@@ -5,19 +5,19 @@
      http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
   <graph id="basic_example" edgedefault="directed">
     <node id="root"/>
-    <node id="level1_lib1"/>
-    <node id="level1_lib2"/>
-    <node id="level1_lib3"/>
-    <node id="level2_lib1"/>
-    <node id="level2_lib2"/>
-    <node id="level3_lib1"/>
-    <edge source="root" target="level1_lib1"/>
-    <edge source="root" target="level1_lib2"/>
-    <edge source="root" target="level1_lib3"/>
-    <edge source="level1_lib1" target="level2_lib1"/>
-    <edge source="level1_lib2" target="level2_lib1"/>
-    <edge source="level1_lib3" target="level2_lib2"/>
-    <edge source="level2_lib1" target="level3_lib1"/>
-    <edge source="level2_lib2" target="level3_lib1"/>
+    <node id="lib1"/>
+    <node id="lib2"/>
+    <node id="lib3"/>
+    <node id="lib4"/>
+    <node id="lib5"/>
+    <node id="lib6"/>
+    <edge source="root" target="lib3"/>
+    <edge source="root" target="lib4"/>
+    <edge source="root" target="lib6"/>
+    <edge source="lib3" target="lib2"/>
+    <edge source="lib4" target="lib2"/>
+    <edge source="lib6" target="lib5"/>
+    <edge source="lib5" target="lib2"/>
+    <edge source="lib2" target="lib1"/>
   </graph>
 </graphml>

@@ -3,8 +3,10 @@ import sys
 
 import networkx as nx
 from conans.graph import Graph
-from typing import List
-from conans.graph.proxy_types import Require
+from typing import List, Dict
+from conans.graph.proxy_types import Require, Provider
+
+from conans.graph.builders.bfs_ex1 import BFSBuilderEx1
 
 
 class ConanFileExample:
@@ -27,11 +29,11 @@ class ConanFileExample:
             yield require
 
 
-class ProviderExample:
+class ProviderExample(Provider):
     def __init__(self, g: nx.DiGraph):
         self.graph = g
 
-    def get_conanfile(self, name: str, version_expr: str) -> ConanFileExample:
+    def get_conanfile(self, name: str, version_expr: Dict[str, Require]) -> ConanFileExample:
         log.info(f"ProviderExample::get_conanfile(name='{name}')")
         return ConanFileExample(name, self.graph)
 
@@ -39,7 +41,7 @@ class ProviderExample:
 def main(filename):
     input_graph = nx.read_graphml(filename)
     root = next(nx.topological_sort(input_graph))
-    nx.drawing.nx_agraph.write_dot(input_graph, "basic_example.dot")
+    nx.drawing.nx_agraph.write_dot(input_graph, "input.dot")
 
     """
     STEP 1
@@ -48,7 +50,8 @@ def main(filename):
     reporting conflicts
     """
     provider = ProviderExample(input_graph)
-    graph = Graph.build(provider, root)
+    graph = Graph.build(provider, root, builder_class=BFSBuilderEx1)
+    nx.drawing.nx_agraph.write_dot(graph, "output.dot")
 
 
 if __name__ == '__main__':
