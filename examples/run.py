@@ -22,6 +22,7 @@ def main(graphml, jsonfile):
     provider = ProviderExample(input_graph, available_recipes)
     graph = bfs_builder(root, provider, builder_class=BFSBuilderEx1)
     graph.write_dot("output.dot")
+    os.system("dot -Tpng output.dot -o output.png")
 
 
 if __name__ == '__main__':
@@ -47,7 +48,7 @@ if __name__ == '__main__':
     graphml = os.path.abspath(
         os.path.join(os.path.dirname(__file__), 'inputs', f'{arguments.example}.xml'))
     jsonfile = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), 'inputs', f'{arguments.example}.json'))
+        os.path.join(os.path.dirname(__file__), 'inputs', f'server.json'))
 
     sys.stdout.write(f"Work on file:\n")
     sys.stdout.write(f" - GraphML: '{graphml}'\n")

@@ -16,7 +16,7 @@
         </edge>
         <edge source="root" target="lib3">
             <data key="type">requires</data>
-            <data key="version">1.2.3</data>
+            <data key="version">1.0</data>
         </edge>
         <edge source="root" target="not-used">
             <data key="type">overrides</data>
@@ -24,7 +24,7 @@
         </edge>
         <edge source="lib3" target="lib2">
             <data key="type">requires</data>
-            <data key="version">1.2.3</data>
+            <data key="version">1.0</data>
         </edge>
         <edge source="lib3" target="lib1">
             <data key="type">overrides</data>

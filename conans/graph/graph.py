@@ -12,10 +12,11 @@ class Graph(nx.DiGraph):
     def context(self):
         return self.graph['context']
 
-    def add_conanfile(self, conanfile: ConanFile):
-        identifier = conanfile.name
-        self.add_node(identifier, data=conanfile)
-        return identifier
+    def get_requires_graph(self):
+        """ Returns the graph taking into account only actual 'requirements' """
+        requires_edges = [(u, v) for (u, v, requires) in self.edges(data='require')
+                          if requires.type == RequireType.requires]
+        return self.edge_subgraph(requires_edges)
 
     def write_dot(self, output: str):
         self.graph['graph'] = {'rankdir': 'BT'}

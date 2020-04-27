@@ -78,32 +78,28 @@ class BFSBuilderEx1(BFSBuilder):
         if not in_edges:
             return self.provider.get_conanfile(vertex, [])
 
-        # Check if someone actually 'requires' this node
-        is_required = False
-        requires: Dict[str, List[Require]] = defaultdict(list)
-        for ori, _, require in in_edges:
-            if require.type == RequireType.requires:
-                is_required = True
-            requires[ori].append(require)
+        requires_graph = self.graph.get_requires_graph()
 
-        # If there is no 'requires' relation, no actual ConanFile to use
-        if not is_required:
-            return None
+        # if the vertex is not in the requires graph, do not get the conanfile
+        if not requires_graph.has_node(vertex):
+            return
+
+        # Filter requires by ancestors:
+        requires_ancestors = nx.ancestors(requires_graph, vertex)
+        requires = {ori: require for ori, _, require in in_edges if ori in requires_ancestors}
 
         # We need to consider all the topological orderings and check they resolve to the same
         #  conanfile, otherwise we have an ambiguity that should be reported as a conflict.
         candidate_conanfiles: List[ConanFile] = []
-        for topo_order in nx.all_topological_sorts(self.graph):
+        for topo_order in nx.all_topological_sorts(requires_graph):
             log.info(f"Topological order: f{topo_order}")
             requires_given_order: List[Tuple[str, Require]] = []
             for it in topo_order:
                 if it == vertex:  # Optimization
                     break
-                for require in requires.get(it, []):
-                    if require.type in [RequireType.requires, RequireType.overrides]:
-                        requires_given_order.append((it, require))
-                    else:
-                        raise NotImplementedError
+                req = requires.get(it, None)
+                if req and req.type in [RequireType.requires, RequireType.overrides]:
+                    requires_given_order.append((it, req))
 
             conanfile = self.provider.get_conanfile(vertex, requires_given_order)
             candidate_conanfiles.append(conanfile)
