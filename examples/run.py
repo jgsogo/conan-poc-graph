@@ -34,6 +34,8 @@ if __name__ == '__main__':
     parser.add_argument("-v", "--verbose", dest="verbose_count",
                         action="count", default=0,
                         help="increases log verbosity for each occurence.")
+    parser.add_argument("example", default=None,
+                        help="example to run.")
     arguments = parser.parse_args(sys.argv[1:])
 
     logging.basicConfig(stream=sys.stderr, level=logging.DEBUG,
@@ -41,10 +43,11 @@ if __name__ == '__main__':
     log = logging.getLogger('conans')
     log.setLevel(max(3 - arguments.verbose_count, 0) * 10)
 
+    sys.stdout.write(f"Example to run: {arguments.example}\n")
     graphml = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), 'inputs', 'basic_example.xml'))
+        os.path.join(os.path.dirname(__file__), 'inputs', f'{arguments.example}.xml'))
     jsonfile = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), 'inputs', 'basic_example.json'))
+        os.path.join(os.path.dirname(__file__), 'inputs', f'{arguments.example}.json'))
 
     sys.stdout.write(f"Work on file:\n")
     sys.stdout.write(f" - GraphML: '{graphml}'\n")
