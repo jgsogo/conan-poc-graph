@@ -8,6 +8,7 @@ from .bfs import BFSBuilder
 from ..proxy_types import RequireType, Require, ConanFile
 
 log = logging.getLogger(__name__)
+from ..graph import Graph
 
 
 class BFSBuilderEx1(BFSBuilder):
@@ -27,12 +28,22 @@ class BFSBuilderEx1(BFSBuilder):
             if require.type == RequireType.requires:
                 # Regular requires: add to graph and queue
                 self.graph.add_node(require.name, color=color)
-            elif require.type == RequireType.context_switch:
-                # Context switch: spawn a new graph
-                pass
             elif require.type == RequireType.overrides:
                 # Overrides: add to graph, but not to queue
                 self.graph.add_node(require.name, color=color)
+            elif require.type == RequireType.context_switch:
+                # Context switch: spawn a new graph
+                # TODO: This should be a call to bfs_builder
+                print("spawn new graph")
+                g = Graph()
+                g.add_edge(vertex, require.name, require=require)
+                builder = BFSBuilderEx1(g, self.provider)
+                builder.run(require.name)
+                g.finish_graph()
+                print(g.nodes())
+                print(require.name)
+                self.graph.add_subgraph(vertex, g, require)
+                continue
             else:
                 raise NotImplementedError(f"Behaviour for require type '{require.type}'"
                                           f" not implemented")
@@ -77,7 +88,6 @@ class BFSBuilderEx1(BFSBuilder):
         # Handle corner-case for the rootnode
         if not in_edges:
             return self.provider.get_conanfile(vertex, [])
-
         requires_graph = self.graph.get_requires_graph()
 
         # if the vertex is not in the requires graph, do not get the conanfile
@@ -87,7 +97,6 @@ class BFSBuilderEx1(BFSBuilder):
         # Filter requires by ancestors:
         requires_ancestors = nx.ancestors(requires_graph, vertex)
         requires = {ori: require for ori, _, require in in_edges if ori in requires_ancestors}
-
         # We need to consider all the topological orderings and check they resolve to the same
         #  conanfile, otherwise we have an ambiguity that should be reported as a conflict.
         candidate_conanfiles: List[ConanFile] = []

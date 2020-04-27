@@ -5,6 +5,7 @@ import networkx as nx
 from conans.graph.builders import bfs_builder, BFSBuilderEx1
 import json
 from .utils import ProviderExample
+from conans.graph import Graph
 
 
 def main(graphml, jsonfile):
@@ -21,7 +22,7 @@ def main(graphml, jsonfile):
     """
     provider = ProviderExample(input_graph, available_recipes)
     graph = bfs_builder(root, provider, builder_class=BFSBuilderEx1)
-    graph.write_dot("output.dot")
+    Graph.write_dot(graph, "output.dot")
     os.system("dot -Tpng output.dot -o output.png")
 
 

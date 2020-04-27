@@ -4,7 +4,9 @@ from .proxy_types import ConanFile, RequireType
 from collections import defaultdict
 
 
+# TODO:: Use a MultiDiGraph and separate requires?
 class Graph(nx.DiGraph):
+    _subgraphs = defaultdict(list)
 
     def __init__(self, context: int = 0, *args, **kwargs):
         super().__init__(context=context, *args, **kwargs)
@@ -12,6 +14,9 @@ class Graph(nx.DiGraph):
     @property
     def context(self):
         return self.graph['context']
+
+    def add_subgraph(self, vertex, graph: "Graph", require):
+        self._subgraphs[vertex].append((graph, require))
 
     def get_requires_graph(self):
         """ Returns the graph taking into account only actual 'requirements' """
@@ -42,10 +47,13 @@ class Graph(nx.DiGraph):
                 for _, u in ordered_requires[1:]:
                     self.edges[(u, v)]['enabled'] = False
 
-    def write_dot(self, output: str):
-        self.graph['graph'] = {'rankdir': 'BT'}
+    @staticmethod
+    def write_dot(graph: "Graph", output: str):
+        graph = graph.copy()
 
-        for (u, v, data) in self.edges(data=True):
+        graph.graph['graph'] = {'rankdir': 'BT'}
+
+        for (u, v, data) in graph.edges(data=True):
             style = "solid"
             color = "black"
             if not data.get('enabled', True):
@@ -53,14 +61,24 @@ class Graph(nx.DiGraph):
             elif data['require'].type == RequireType.overrides:
                 color = "blue"
 
-            self.edges[(u, v)]['style'] = style
-            self.edges[(u, v)]['color'] = color
-            self.edges[(u, v)]['label'] = str(data['require'])
+            graph.edges[(u, v)]['style'] = style
+            graph.edges[(u, v)]['color'] = color
+            graph.edges[(u, v)]['label'] = str(data['require'])
 
-        for node, data in self.nodes(data=True):
+        for node, data in graph.nodes(data=True):
             if data.get('enabled', False):
-                self.nodes[node]['label'] = str(data['conanfile'])
+                graph.nodes[node]['label'] = str(data['conanfile'])
             else:
-                self.nodes[node]['style'] = "dotted"
+                graph.nodes[node]['style'] = "dotted"
 
-        nx.drawing.nx_agraph.write_dot(self, output)
+        # Add the subgraphs
+        for vertex, subgraphs in graph._subgraphs.items():
+            for subgraph_, require in subgraphs:
+                subgraph = subgraph_.copy()
+                for n, data in subgraph.nodes(data=True):
+                    graph.add_node(n, **data)
+                for u, v, data in subgraph.edges(data=True):
+                    graph.add_edge(u, v, **data)
+                graph.add_edge(vertex, require.name, require=require, color='red')
+
+        nx.drawing.nx_agraph.write_dot(graph, output)
