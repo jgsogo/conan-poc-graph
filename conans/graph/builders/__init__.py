@@ -12,4 +12,5 @@ def bfs_builder(vertex: str, provider: Type[Provider],
     g.add_node(vertex)
     builder = builder_class(g, provider)
     builder.run(vertex)
+    g.finish_graph()
     return g

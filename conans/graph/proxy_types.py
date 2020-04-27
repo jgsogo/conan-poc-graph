@@ -24,8 +24,6 @@ class Require:
     version_expr: str = ""
     options: Dict[str, str] = {}
 
-    enabled: bool = True
-
     def __str__(self):
         if self.options:
             return f"{self.name}/{self.version_expr} ({self.type.name}, {self.options})"

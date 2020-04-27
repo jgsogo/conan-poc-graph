@@ -57,8 +57,6 @@ class ProviderExample(Provider):
             if require.type == RequireType.overrides:
                 if not overriden:
                     version_selected = require.version_expr
-                else:
-                    require.enabled = False
                 overriden = True
             elif require.type == RequireType.requires:
                 if not overriden:
