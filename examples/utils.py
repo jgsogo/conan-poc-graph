@@ -1,9 +1,9 @@
 import logging
 from collections import defaultdict
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 import networkx as nx
-from conans.graph.proxy_types import Require, Provider, RequireType, ConanFile
+from conans.graph.proxy_types import Require, Provider, RequireType, ConanFile, LibraryType
 
 log = logging.getLogger(__name__)
 
@@ -14,22 +14,33 @@ class ConanFileExample(ConanFile):
         self._graph = graph
         self.name = name
 
-    def get_requires(self) -> List[Require]:
-        requires = defaultdict(Require)
-        for _, target, data in self._graph.out_edges(self.name, data=True):
-            require = requires[target]
-            require.type = RequireType[data['type']]
-            require.name = target
-            if 'version' in data:
-                require.version_expr = data['version']
-            if 'options' in data:
-                options = {}
-                for opt in data['options'].split(';'):
-                    key, value = opt.split('=')
-                    options[key] = value
-                require.options = options
+    @staticmethod
+    def _parse_options(options) -> Dict[str, str]:
+        ret = {}
+        if options:
+            for opt in options.split(';'):
+                key, value = opt.split('=')
+                ret[key] = value
+        return ret
 
-        return requires.values()
+    def _parse_requires(self, name, data) -> Require:
+        options = self._parse_options(data.pop('options', None))
+        require = Require()
+        require.name = name
+        require.options = options
+        for key in data:
+            setattr(require, key, data[key])
+        return require
+
+    def get_type(self) -> LibraryType:
+        return self._graph.nodes[self.name]["library_type"]
+
+    def get_requires(self) -> List[Require]:
+        requires_data = defaultdict(dict)
+        for _, target, data in self._graph.out_edges(self.name, data=True):
+            require_data = requires_data[target]
+            require_data.update(data)
+        return [self._parse_requires(name=key, data=data) for key, data in requires_data.items()]
 
 
 class ProviderExample(Provider):

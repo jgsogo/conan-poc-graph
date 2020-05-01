@@ -1,34 +1,63 @@
-# from .reference import Reference
-from typing import Dict, List, Tuple
 from enum import Enum
+from typing import Dict, List, Tuple, Optional
+
+
+class EdgeType(Enum):
+    """
+    Edge type: some edges introduce a topological relation (there is an actual
+    requirement between two nodes) while other just introduce information like
+    overrides or options
+    """
+    topological = 1  # Declares a dependency
+    override = 2  # Overrides a version, defines default options,...
 
 
 class RequireType(Enum):
     """
-    There are different types of requires:
-     * regular requires
-     * context-switch requires (tools, privates, plugins,...)
-     * requires because of overrides
-     * requires because of options
+    Defines how the consumer will consume the required node
     """
-    requires = 1
-    context_switch = 2
-    overrides = 3
-    # TODO: Need a better classification here
+    assets = 1
+    library = 2
+    tool = 3
+    plugin = 4
+
+
+class Visibility(Enum):
+    interface = 1
+    public = 2
+    private = 3
+
+
+class Context(Enum):
+    host = 1
+    other = 2
+
+
+class LibraryType(Enum):
+    header_only = 1
+    static = 2
+    shared = 3
 
 
 class Require:
-    type: RequireType = None
     name: str
+    version_expr: str
+    edge_type: EdgeType = None
 
-    version_expr: str = ""
+    # A topological require will define these properties
+    require_type: Optional[RequireType] = None
+    visibility: Optional[Visibility] = None
+    context: Optional[Context] = None
+
+    # Options can be defined by a topological or overrides relation
     options: Dict[str, str] = {}
 
     def __str__(self):
+        ret = f"{self.edge_type.name}\n{self.name}/{self.version_expr}"
+        if self.edge_type == EdgeType.topological:
+            ret += f"\n{self.visibility.name}\n{self.require_type.name}\n{self.context.name}"
         if self.options:
-            return f"{self.name}/{self.version_expr} ({self.type.name}, {self.options})"
-        else:
-            return f"{self.name}/{self.version_expr} ({self.type.name})"
+            ret += f"\n{self.options}"
 
 
 class ConanFile:
@@ -50,7 +79,11 @@ class ConanFile:
         return hash(self.name) ^ hash(self.version)
 
     def __eq__(self, other: "ConanFile") -> bool:
-        return self.name == other.name and self.version == other.version and self.options == other.options
+        return self.name == other.name and self.version == other.version\
+               and self.options == other.options
+
+    def get_type(self) -> LibraryType:
+        raise NotImplementedError
 
     def get_requires(self) -> List[Require]:
         raise NotImplementedError
