@@ -1,42 +1,42 @@
-from enum import Enum
+from enum import Enum, auto
 from typing import Dict, List, Tuple, Optional
 
 
-class EdgeType(Enum):
+class AutoName(Enum):
+    def _generate_next_value_(name, start, count, last_values):
+        return name
+
+
+class EdgeType(AutoName):
     """
     Edge type: some edges introduce a topological relation (there is an actual
     requirement between two nodes) while other just introduce information like
     overrides or options
     """
-    topological = 1  # Declares a dependency
-    override = 2  # Overrides a version, defines default options,...
+    topological = auto()  # Declares a dependency
+    override = auto()  # Overrides a version
+    options = auto()  # Overrides options (do not say anything about the version)
 
 
-class RequireType(Enum):
+class RequireType(AutoName):
     """
     Defines how the consumer will consume the required node
     """
-    assets = 1
-    library = 2
-    tool = 3
-    plugin = 4
+    assets = auto()
+    library = auto()
+    tool = auto()
+    plugin = auto()
 
 
-class Visibility(Enum):
-    interface = 1
-    public = 2
-    private = 3
+class Visibility(AutoName):
+    interface = auto()
+    public = auto()
+    private = auto()
 
 
-class Context(Enum):
-    host = 1
-    other = 2
-
-
-class LibraryType(Enum):
-    header_only = 1
-    static = 2
-    shared = 3
+class Context(AutoName):
+    host = auto()
+    other = auto()
 
 
 class Require:
@@ -58,6 +58,13 @@ class Require:
             ret += f"\n{self.visibility.name}\n{self.require_type.name}\n{self.context.name}"
         if self.options:
             ret += f"\n{self.options}"
+        return ret
+
+
+class LibraryType(AutoName):
+    header_only = auto()
+    static = auto()
+    shared = auto()
 
 
 class ConanFile:
@@ -79,7 +86,7 @@ class ConanFile:
         return hash(self.name) ^ hash(self.version)
 
     def __eq__(self, other: "ConanFile") -> bool:
-        return self.name == other.name and self.version == other.version\
+        return self.name == other.name and self.version == other.version \
                and self.options == other.options
 
     def get_type(self) -> LibraryType:

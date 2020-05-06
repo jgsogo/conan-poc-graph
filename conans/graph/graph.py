@@ -1,7 +1,9 @@
 import networkx as nx
-
-from .proxy_types import ConanFile, RequireType
+import logging
+from .proxy_types import ConanFile, RequireType, EdgeType, Require
 from collections import defaultdict
+
+log = logging.getLogger(__name__)
 
 
 # TODO:: Use a MultiDiGraph and separate requires?
@@ -21,7 +23,7 @@ class Graph(nx.DiGraph):
     def get_requires_graph(self):
         """ Returns the graph taking into account only actual 'requirements' """
         requires_edges = [(u, v) for (u, v, requires) in self.edges(data='require')
-                          if requires.type == RequireType.requires]
+                          if requires.edge_type == EdgeType.topological]
         return self.edge_subgraph(requires_edges)
 
     def finish_graph(self):
@@ -31,7 +33,7 @@ class Graph(nx.DiGraph):
         for (u, v, require) in self.edges(data='require'):
             if not requires_graph.has_node(u) or not requires_graph.has_node(v):
                 self.edges[(u, v)]['enabled'] = False
-            elif require.type == RequireType.overrides:
+            elif require.edge_type == EdgeType.override:
                 try:
                     spath_len = nx.shortest_path_length(requires_graph, u, v)
                 except nx.exception.NetworkXNoPath:
@@ -49,6 +51,7 @@ class Graph(nx.DiGraph):
 
     @staticmethod
     def write_dot(graph: "Graph", output: str):
+        log.debug(f"Graph::write_dot(graph, output='{output}')")
         graph = graph.copy()
 
         graph.graph['graph'] = {'rankdir': 'BT'}
@@ -58,7 +61,7 @@ class Graph(nx.DiGraph):
             color = "black"
             if not data.get('enabled', True):
                 style = "dotted"
-            elif data['require'].type == RequireType.overrides:
+            elif data['require'].edge_type == EdgeType.override:
                 color = "blue"
 
             graph.edges[(u, v)]['style'] = style
@@ -71,6 +74,7 @@ class Graph(nx.DiGraph):
             else:
                 graph.nodes[node]['style'] = "dotted"
 
+        """
         # Add the subgraphs
         for vertex, subgraphs in graph._subgraphs.items():
             for subgraph_, require in subgraphs:
@@ -80,5 +84,6 @@ class Graph(nx.DiGraph):
                 for u, v, data in subgraph.edges(data=True):
                     graph.add_edge(u, v, **data)
                 graph.add_edge(vertex, require.name, require=require, color='red')
+        """
 
         nx.drawing.nx_agraph.write_dot(graph, output)

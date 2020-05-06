@@ -5,7 +5,7 @@ from typing import List, Tuple, Dict, Optional
 import networkx as nx
 
 from .bfs import BFSBuilder
-from ..proxy_types import RequireType, Require, ConanFile
+from ..proxy_types import RequireType, Require, ConanFile, Visibility, Context, EdgeType
 
 log = logging.getLogger(__name__)
 from ..graph import Graph
@@ -25,14 +25,9 @@ class BFSBuilderEx1(BFSBuilder):
         for require in conanfile.get_requires():
             node_already_in_graph = self.graph.has_node(require.name)
             color = self.graph.nodes[require.name]['color'] if node_already_in_graph else 'white'
-            if require.type == RequireType.requires:
-                # Regular requires: add to graph and queue
-                self.graph.add_node(require.name, color=color)
-            elif require.type == RequireType.overrides:
-                # Overrides: add to graph, but not to queue
-                self.graph.add_node(require.name, color=color)
-            elif require.type == RequireType.context_switch:
-                # Context switch: spawn a new graph
+            if require.visibility == Visibility.private or require.context == Context.other:
+                # We need to create a new graph
+                raise NotImplementedError
                 # TODO: This should be a call to bfs_builder
                 print("spawn new graph")
                 g = Graph()
@@ -45,8 +40,8 @@ class BFSBuilderEx1(BFSBuilder):
                 self.graph.add_subgraph(vertex, g, require)
                 continue
             else:
-                raise NotImplementedError(f"Behaviour for require type '{require.type}'"
-                                          f" not implemented")
+                # It belongs to the 'host' context and it is not private
+                self.graph.add_node(require.name, color=color)
             self.graph.add_edge(vertex, require.name, require=require)
 
     def non_tree_edge(self, origin: str, target: str):
@@ -85,7 +80,7 @@ class BFSBuilderEx1(BFSBuilder):
             (steps according to 'requires' relation)
         """
         in_edges = self.graph.in_edges(vertex, data='require')
-        # Handle corner-case for the rootnode
+        # Handle corner-case for the rootnode  # TODO: You can do better
         if not in_edges:
             return self.provider.get_conanfile(vertex, [])
         requires_graph = self.graph.get_requires_graph()
@@ -96,7 +91,7 @@ class BFSBuilderEx1(BFSBuilder):
 
         # Filter requires by ancestors:
         requires_ancestors = nx.ancestors(requires_graph, vertex)
-        requires = {ori: require for ori, _, require in in_edges if ori in requires_ancestors}
+        requires: Dict[str, Require] = {ori: require for ori, _, require in in_edges if ori in requires_ancestors}
         # We need to consider all the topological orderings and check they resolve to the same
         #  conanfile, otherwise we have an ambiguity that should be reported as a conflict.
         candidate_conanfiles: List[ConanFile] = []
@@ -107,7 +102,7 @@ class BFSBuilderEx1(BFSBuilder):
                 if it == vertex:  # Optimization
                     break
                 req = requires.get(it, None)
-                if req and req.type in [RequireType.requires, RequireType.overrides]:
+                if req:
                     requires_given_order.append((it, req))
 
             conanfile = self.provider.get_conanfile(vertex, requires_given_order)

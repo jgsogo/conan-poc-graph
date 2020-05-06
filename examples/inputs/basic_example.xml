@@ -4,7 +4,9 @@
          xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns
      http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
     <!-- properties for edges -->
-    <key id="edge_type" for="edge" attr.name="edge_type" attr.type="string"/>
+    <key id="edge_type" for="edge" attr.name="edge_type" attr.type="string">
+        <default>topological</default>
+    </key>
     <key id="version" for="edge" attr.name="version" attr.type="string"/>
     <key id="require_type" for="edge" attr.name="require_type" attr.type="string">
         <default>library</default>
