@@ -3,8 +3,7 @@ from typing import List, Tuple, Dict
 
 import networkx as nx
 
-from conans.graph.proxy_types import Require, Provider, RequireType, ConanFile, LibraryType, EdgeType, Visibility, \
-    Context
+from conans.graph.proxy_types import Require, Provider, RequireType, ConanFile, LibraryType, EdgeType, Visibility
 
 log = logging.getLogger(__name__)
 
@@ -39,7 +38,7 @@ class ConanFileExample(ConanFile):
             elif key == 'visibility':
                 require.visibility = Visibility(data[key])
             elif key == 'context':
-                require.context = Context(data[key])
+                require.context = data[key]
             else:
                 raise NotImplementedError(f"Field '{key}' not expected for require")
         return require
@@ -89,7 +88,7 @@ class ProviderExample(Provider):
                 if not overriden:
                     version_selected = require.version_expr
 
-        assert version_selected in versions_available, f"{version_selected} not found in {versions_available}"
+        assert version_selected in versions_available, f"(name={name}) {version_selected} not found in {versions_available}"
         conanfile = ConanFileExample(name=name, version=version_selected, graph=self.graph)
         conanfile.options = options
         return conanfile

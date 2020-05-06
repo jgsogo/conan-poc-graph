@@ -14,9 +14,7 @@
     <key id="visibility" for="edge" attr.name="visibility" attr.type="string">
         <default>public</default>
     </key>
-    <key id="context" for="edge" attr.name="context" attr.type="string">
-        <default>host</default>
-    </key>
+    <key id="context" for="edge" attr.name="context" attr.type="string"/>
     <key id="options" for="edge" attr.name="options" attr.type="string"/>
     <!-- properties for nodes -->
     <key id="library_type" for="node" attr.name="library_type" attr.type="string">

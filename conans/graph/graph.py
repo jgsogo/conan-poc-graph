@@ -1,9 +1,10 @@
 import logging
 from collections import defaultdict
+from typing import Optional, Dict, List, Tuple
 
 import networkx as nx
 
-from .proxy_types import EdgeType
+from .proxy_types import EdgeType, Require
 
 log = logging.getLogger(__name__)
 
@@ -11,16 +12,28 @@ log = logging.getLogger(__name__)
 # TODO:: Use a MultiDiGraph and separate requires?
 class Graph(nx.DiGraph):
 
-    def __init__(self, context: int = 0, *args, **kwargs):
+    def __init__(self, context: Optional[str] = "", *args, **kwargs):
         super().__init__(context=context, *args, **kwargs)
-        self._subgraphs = defaultdict(list)
+        self._subgraphs: Dict[int, "Graph"] = dict()
+        self._subgraph_edges: List[Tuple[str, Require]] = list()
 
     @property
     def context(self):
         return self.graph['context']
 
-    def add_subgraph(self, vertex, graph: "Graph", require):
-        self._subgraphs[vertex].append((graph, require))
+    @staticmethod
+    def _hash_require(require: Require) -> int:
+        return hash(require.name) ^ hash(require.context) ^ hash(str(require.options))
+
+    def get_subgraph(self, require: Require):
+        subraph_id = self._hash_require(require)
+        return self._subgraphs.get(subraph_id, None)
+
+    def add_subgraph(self, vertex, graph: "Graph", require: Require):
+        subraph_id = self._hash_require(require)
+        # TODO: Check graphs are the same (if already existing)
+        self._subgraphs[subraph_id] = graph
+        self._subgraph_edges.append((vertex, require),)
 
     def get_requires_graph(self):
         """ Returns the graph taking into account only actual 'requirements' """
@@ -51,48 +64,50 @@ class Graph(nx.DiGraph):
                 for _, u in ordered_requires[1:]:
                     self.edges[(u, v)]['enabled'] = False
 
-    @staticmethod
-    def printable_graph(graph: "Graph", scope=""):
-        log.debug(f"Graph::printable_graph(graph, scope='{scope}')")
-        printable = Graph()
+    def plain_graph(self):
+        conan_graph = Graph()
+        self._plain_graph(conan_graph)
+        return conan_graph
 
-        for node, data in graph.nodes(data=True):
-            node = f"{scope}{node}"
+    def _plain_graph(self, conan_graph: "Graph", scope=""):
+        """ Returns a new graph:
+            * nodes will use a different ID: name + context + options
+            * edges:
+              + only topological ones
+              + will preserve only the visibility and require_type information
+        """
+        log.debug(f"Graph::_plain_graph(graph, scope='{scope}')")
+
+        def _node_id(name, context, options):
+            return hash(name) ^ hash(f"{scope}{context}") ^ hash(str(options))
+
+        for node, data in self.nodes(data=True):
             if data.get('enabled', False):
-                printable.add_node(node, label=f"{scope}{str(data['conanfile'])}")
-            else:
-                printable.add_node(node, style="dotted")
+                node_id = _node_id(node, self.context, data['conanfile'].options)
+                assert node_id not in conan_graph, f"{self.context}::{node} is already in the graph!"  # IMPORTANT! Check we are not removing nodes here
+                conan_graph.add_node(node_id, conanfile=data['conanfile'], context=f"{scope}{self.context}",
+                                     label=str(data['conanfile']))
 
-        for (u, v, data) in graph.edges(data=True):
-            style = "solid"
-            color = "black"
-            if not data.get('enabled', True):
-                style = "dotted"
-            elif data['require'].edge_type == EdgeType.override:
-                color = "blue"
+        for (u, v, data) in self.edges(data=True):
+            require: Require = data['require']
+            if require.edge_type == EdgeType.topological:
+                u_node = _node_id(u, self.context, self.nodes[u]['conanfile'].options)
+                v_node = _node_id(v, self.context, self.nodes[v]['conanfile'].options)
+                assert not conan_graph.has_edge(u_node, v_node)  # IMPORTANT! Check we are not removing edged here
+                conan_graph.add_edge(u_node, v_node, visibility=require.visibility, type=require.require_type,
+                                     label=f"{require.visibility.name}\n{require.require_type.name}")
 
-            u = f"{scope}{u}"
-            v = f"{scope}{v}"
-            printable.add_edge(u, v, style=style, color=color, label=str(data['require']))
+        # Work on subgraphs
+        for subgraph in self._subgraphs.values():
+            log.debug(f" - expand subgraph with context {subgraph.context}")
+            subgraph_scope = f"{scope}" if subgraph.context == self.context else f"{scope}{self.context}::"
+            subgraph._plain_graph(conan_graph, scope=subgraph_scope)
 
-        # Add the subgraphs
-        for vertex, subgraphs in graph._subgraphs.items():
-            vertex = f"{scope}{vertex}"
-            for subgraph_, require in subgraphs:
-                subgraph_printable = Graph.printable_graph(subgraph_, scope=f'{vertex}::')
-
-                for n, data in subgraph_printable.nodes(data=True):
-                    printable.add_node(n, **data)
-
-                for u, v, data in subgraph_printable.edges(data=True):
-                    printable.add_edge(u, v, **data)
-
-                printable.add_edge(vertex, f"{vertex}::{require.name}", color='red', label=str(require))
-        return printable
-
-    @staticmethod
-    def write_dot(graph: "Graph", output: str):
-        log.debug(f"Graph::write_dot(graph, output='{output}')")
-        graph = Graph.printable_graph(graph)
-        graph.graph['graph'] = {'rankdir': 'BT'}
-        nx.drawing.nx_agraph.write_dot(graph, output)
+        for vertex, require in self._subgraph_edges:
+            subgraph = self._subgraphs[self._hash_require(require)]
+            subgraph_scope = "" if subgraph.context == self.context else f"{self.context}::"
+            u_node = _node_id(vertex, self.context, self.nodes[vertex]['conanfile'].options)
+            v_node = _node_id(require.name, f"{subgraph_scope}{subgraph.context}", subgraph.nodes[require.name]['conanfile'].options)
+            conan_graph.add_edge(u_node, v_node, visibility=require.visibility, type=require.require_type,
+                                 label=f"{require.visibility.name}\n{require.require_type.name}",
+                                 color='blue')

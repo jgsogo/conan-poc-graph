@@ -34,11 +34,6 @@ class Visibility(AutoName):
     private = auto()
 
 
-class Context(AutoName):
-    host = auto()
-    other = auto()
-
-
 class Require:
     name: str
     version_expr: str
@@ -47,7 +42,7 @@ class Require:
     # A topological require will define these properties
     require_type: Optional[RequireType] = None
     visibility: Optional[Visibility] = None
-    context: Optional[Context] = None
+    context: Optional[str] = None
 
     # Options can be defined by a topological or overrides relation
     options: Dict[str, str] = {}
@@ -55,10 +50,15 @@ class Require:
     def __str__(self):
         ret = f"{self.edge_type.name}\n{self.name}/{self.version_expr}"
         if self.edge_type == EdgeType.topological:
-            ret += f"\n{self.visibility.name}\n{self.require_type.name}\n{self.context.name}"
+            ret += f"\n{self.visibility.name}\n{self.require_type.name}"
+        if self.context:
+            ret += f"\n{self.context}"
         if self.options:
             ret += f"\n{self.options}"
         return ret
+
+    def unique_id(self):
+        return hash(self.context) ^ hash(str(self.options))
 
 
 class LibraryType(AutoName):

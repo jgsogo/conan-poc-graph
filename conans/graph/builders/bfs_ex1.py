@@ -4,7 +4,7 @@ from typing import List, Tuple, Dict, Optional
 import networkx as nx
 
 from .bfs import BFSBuilder
-from ..proxy_types import Require, ConanFile, Visibility, Context
+from ..proxy_types import Require, ConanFile, Visibility
 
 log = logging.getLogger(__name__)
 
@@ -25,15 +25,9 @@ class BFSBuilderEx1(BFSBuilder):
         for require in self.graph.nodes[vertex]['conanfile'].get_requires():
             node_already_in_graph = self.graph.has_node(require.name)
             color = self.graph.nodes[require.name]['color'] if node_already_in_graph else 'white'
-            if require.visibility == Visibility.private or require.context == Context.other:
+            if require.visibility == Visibility.private or require.context and require.context != self.graph.context:
                 # We need to create a new graph
-                # TODO: This should be a call to bfs_builder
-                log.info(f"=== New subgraph starting from '{vertex}' to '{require.name}'")
-                conanfile = self.provider.get_conanfile(require.name, [(vertex, require), ])
-                from . import bfs_builder
-                g = bfs_builder(require.name, provider=self.provider, builder_class=self.__class__, conanfile=conanfile)
-                self.graph.add_subgraph(vertex, g, require)
-                log.info(f"=== End subgraph")
+                self._create_subgraph(vertex, require)
                 continue
             else:
                 # It belongs to the 'host' context and it is not private
@@ -49,6 +43,20 @@ class BFSBuilderEx1(BFSBuilder):
             self._prune(target,
                         raise_if_pruning=origin)  # TODO: Optimization, check if the new require is going to modify anything (keep this minimal, implement in a child)
             self._append(target)
+
+    def _create_subgraph(self, vertex, require):
+        log.info(f"BFSBuilder::_create_subgraph(vertex='{vertex}', require='{require.name}')")
+        # If the subgraph has already been built...
+        subgraph = self.graph.get_subgraph(require)
+        if subgraph:
+            log.info(f"Reusing existing graph")
+            self.graph.add_subgraph(vertex, subgraph, require)
+        else:
+            conanfile = self.provider.get_conanfile(require.name, [(vertex, require), ])
+            from . import bfs_builder
+            g = bfs_builder(require.name, provider=self.provider, context=require.context or self.graph.context,
+                            builder_class=self.__class__, conanfile=conanfile)
+            self.graph.add_subgraph(vertex, g, require)
 
     def _prune(self, vertex: str, raise_if_pruning: str):
         log.debug(f"BFSBuilder::_prune(vertex='{vertex}', raise_if_pruning='{raise_if_pruning}')")

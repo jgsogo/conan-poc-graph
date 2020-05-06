@@ -6,9 +6,9 @@ from ..graph import Graph
 from ..proxy_types import Provider
 
 
-def bfs_builder(vertex: str, provider: Type[Provider],
+def bfs_builder(vertex: str, provider: Type[Provider], context=None,
                 builder_class: Type[BaseBuilder] = BFSBuilderEx1, **node_args):
-    g = Graph()
+    g = Graph(context=context)
     g.add_node(vertex, enabled=True, **node_args)
     builder = builder_class(g, provider)
     builder.run(vertex)

@@ -7,6 +7,7 @@ import networkx as nx
 from conans.graph import Graph
 from conans.graph.builders import bfs_builder, BFSBuilderEx1
 from .utils import ProviderExample
+from conans.graph.printer import write_dot
 
 
 def main(graphml, jsonfile):
@@ -22,8 +23,17 @@ def main(graphml, jsonfile):
     reporting conflicts
     """
     provider = ProviderExample(input_graph, available_recipes)
-    graph = bfs_builder(root, provider, builder_class=BFSBuilderEx1)
-    Graph.write_dot(graph, "output.dot")
+    conanfile = provider.get_conanfile(root, [])
+    graph = bfs_builder(root, provider, builder_class=BFSBuilderEx1, conanfile=conanfile)
+
+    # Print raw
+    conan_graph = graph.plain_graph()
+    conan_graph.graph['graph'] = {'rankdir': 'BT'}
+    nx.drawing.nx_agraph.write_dot(conan_graph, "output_raw.dot")
+    os.system("dot -Tpng output_raw.dot -o output_raw.png")
+
+    # Print beauty
+    write_dot(graph, "output.dot")
     os.system("dot -Tpng output.dot -o output.png")
 
 

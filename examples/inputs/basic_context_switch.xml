@@ -14,9 +14,7 @@
     <key id="visibility" for="edge" attr.name="visibility" attr.type="string">
         <default>public</default>
     </key>
-    <key id="context" for="edge" attr.name="context" attr.type="string">
-        <default>host</default>
-    </key>
+    <key id="context" for="edge" attr.name="context" attr.type="string"/>
     <key id="options" for="edge" attr.name="options" attr.type="string"/>
     <!-- properties for nodes -->
     <key id="library_type" for="node" attr.name="library_type" attr.type="string">
@@ -45,8 +43,12 @@
             <data key="context">other</data>
             <data key="version">1.0</data>
         </edge>
+        <edge source="lib1" target="lib4">
+            <data key="context">other</data>
+            <data key="version">1.0</data>
+        </edge>
         <edge source="lib4" target="lib3">
-            <data key="version">2.0</data>
+            <data key="version">1.0</data>
         </edge>
         <edge source="lib3" target="lib5">
             <data key="version">1.0</data>
