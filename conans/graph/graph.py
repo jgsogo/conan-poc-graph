@@ -52,7 +52,14 @@ class Graph(nx.DiGraph):
     @staticmethod
     def printable_graph(graph: "Graph", scope=""):
         log.debug(f"Graph::printable_graph(graph, scope='{scope}')")
-        printable = graph.copy()
+        printable = Graph()
+
+        for node, data in graph.nodes(data=True):
+            node = f"{scope}{node}"
+            if data.get('enabled', False):
+                printable.add_node(node, label=f"{scope}{str(data['conanfile'])}")
+            else:
+                printable.add_node(node, style="dotted")
 
         for (u, v, data) in graph.edges(data=True):
             style = "solid"
@@ -62,32 +69,23 @@ class Graph(nx.DiGraph):
             elif data['require'].edge_type == EdgeType.override:
                 color = "blue"
 
-            printable.edges[(u, v)]['style'] = style
-            printable.edges[(u, v)]['color'] = color
-            printable.edges[(u, v)]['label'] = str(data['require'])
-
-        for node, data in graph.nodes(data=True):
-            if data.get('enabled', False):
-                try:
-                    printable.nodes[node]['label'] = str(data['conanfile'])
-                except:
-                    printable.nodes[node]['label'] = "no conanfile"
-            else:
-                printable.nodes[node]['style'] = "dotted"
+            u = f"{scope}{u}"
+            v = f"{scope}{v}"
+            printable.add_edge(u, v, style=style, color=color, label=str(data['require']))
 
         # Add the subgraphs
         for vertex, subgraphs in graph._subgraphs.items():
+            vertex = f"{scope}{vertex}"
             for subgraph_, require in subgraphs:
-                subgraph_printable = Graph.printable_graph(subgraph_, scope=f'{require.name}::')
+                subgraph_printable = Graph.printable_graph(subgraph_, scope=f'{vertex}::')
 
                 for n, data in subgraph_printable.nodes(data=True):
-                    if n not in graph:
-                        printable.add_node(n, **data)
+                    printable.add_node(n, **data)
 
                 for u, v, data in subgraph_printable.edges(data=True):
                     printable.add_edge(u, v, **data)
 
-                printable.add_edge(vertex, require.name, require=require, color='red')
+                printable.add_edge(vertex, f"{vertex}::{require.name}", color='red', label=str(require))
         return printable
 
 

@@ -17,13 +17,14 @@ class BFSBuilderEx1(BFSBuilder):
         log.debug(f"BFSBuilder::examine_vertex(conanfile='{vertex}')")
         # We are going to populate the graph based on the Conan information, so
         # the algorithm can keep running
-        conanfile = self._get_conanfile(vertex)
-        if not conanfile:
-            log.warning(f"No conanfile found for '{vertex}'")
-            return
+        if 'conanfile' not in self.graph.nodes[vertex]:
+            conanfile = self._get_conanfile(vertex)
+            if not conanfile:
+                log.warning(f"No conanfile found for '{vertex}'")
+                return
+            self.graph.nodes[vertex]['conanfile'] = conanfile
 
-        self.graph.nodes[vertex]['conanfile'] = conanfile
-        for require in conanfile.get_requires():
+        for require in self.graph.nodes[vertex]['conanfile'].get_requires():
             node_already_in_graph = self.graph.has_node(require.name)
             color = self.graph.nodes[require.name]['color'] if node_already_in_graph else 'white'
             if require.visibility == Visibility.private or require.context == Context.other:
@@ -31,7 +32,8 @@ class BFSBuilderEx1(BFSBuilder):
                 # TODO: This should be a call to bfs_builder
                 log.info(f"=== New subgraph starting from '{vertex}' to '{require.name}'")
                 g = Graph()
-                g.add_edge(vertex, require.name, require=require)
+                conanfile = self.provider.get_conanfile(require.name, [(vertex, require), ])
+                g.add_node(require.name, conanfile=conanfile)
                 builder = BFSBuilderEx1(g, self.provider)
                 builder.run(require.name)
                 g.finish_graph()
