@@ -3,8 +3,26 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns
      http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
-    <key id="type" for="edge" attr.name="type" attr.type="string"/>
+    <!-- properties for edges -->
+    <key id="edge_type" for="edge" attr.name="edge_type" attr.type="string">
+        <default>topological</default>
+    </key>
     <key id="version" for="edge" attr.name="version" attr.type="string"/>
+    <key id="require_type" for="edge" attr.name="require_type" attr.type="string">
+        <default>library</default>
+    </key>
+    <key id="visibility" for="edge" attr.name="visibility" attr.type="string">
+        <default>public</default>
+    </key>
+    <key id="context" for="edge" attr.name="context" attr.type="string">
+        <default>host</default>
+    </key>
+    <key id="options" for="edge" attr.name="options" attr.type="string"/>
+    <!-- properties for nodes -->
+    <key id="library_type" for="node" attr.name="library_type" attr.type="string">
+        <default>static</default>
+    </key>
+    <!-- graph -->
     <graph id="basic_example" edgedefault="directed">
         <node id="root"/>
         <node id="lib1"/>
@@ -13,27 +31,22 @@
         <node id="lib4"/>
         <node id="lib5"/>
         <edge source="root" target="lib1">
-            <data key="type">requires</data>
             <data key="version">1.0</data>
         </edge>
         <edge source="root" target="lib2">
-            <data key="type">requires</data>
             <data key="version">1.0</data>
         </edge>
         <edge source="lib1" target="lib3">
-            <data key="type">requires</data>
             <data key="version">1.0</data>
         </edge>
         <edge source="lib2" target="lib3">
-            <data key="type">requires</data>
             <data key="version">1.0</data>
         </edge>
         <edge source="lib2" target="lib4">
-            <data key="type">context_switch</data>
+            <data key="context">other</data>
             <data key="version">1.0</data>
         </edge>
         <edge source="lib4" target="lib5">
-            <data key="type">requires</data>
             <data key="version">1.0</data>
         </edge>
     </graph>

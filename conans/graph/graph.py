@@ -8,10 +8,10 @@ log = logging.getLogger(__name__)
 
 # TODO:: Use a MultiDiGraph and separate requires?
 class Graph(nx.DiGraph):
-    _subgraphs = defaultdict(list)
 
     def __init__(self, context: int = 0, *args, **kwargs):
         super().__init__(context=context, *args, **kwargs)
+        self._subgraphs = defaultdict(list)
 
     @property
     def context(self):
@@ -50,11 +50,9 @@ class Graph(nx.DiGraph):
                     self.edges[(u, v)]['enabled'] = False
 
     @staticmethod
-    def write_dot(graph: "Graph", output: str):
-        log.debug(f"Graph::write_dot(graph, output='{output}')")
-        graph = graph.copy()
-
-        graph.graph['graph'] = {'rankdir': 'BT'}
+    def printable_graph(graph: "Graph", scope=""):
+        log.debug(f"Graph::printable_graph(graph, scope='{scope}')")
+        printable = graph.copy()
 
         for (u, v, data) in graph.edges(data=True):
             style = "solid"
@@ -64,26 +62,38 @@ class Graph(nx.DiGraph):
             elif data['require'].edge_type == EdgeType.override:
                 color = "blue"
 
-            graph.edges[(u, v)]['style'] = style
-            graph.edges[(u, v)]['color'] = color
-            graph.edges[(u, v)]['label'] = str(data['require'])
+            printable.edges[(u, v)]['style'] = style
+            printable.edges[(u, v)]['color'] = color
+            printable.edges[(u, v)]['label'] = str(data['require'])
 
         for node, data in graph.nodes(data=True):
             if data.get('enabled', False):
-                graph.nodes[node]['label'] = str(data['conanfile'])
+                try:
+                    printable.nodes[node]['label'] = str(data['conanfile'])
+                except:
+                    printable.nodes[node]['label'] = "no conanfile"
             else:
-                graph.nodes[node]['style'] = "dotted"
+                printable.nodes[node]['style'] = "dotted"
 
-        """
         # Add the subgraphs
         for vertex, subgraphs in graph._subgraphs.items():
             for subgraph_, require in subgraphs:
-                subgraph = subgraph_.copy()
-                for n, data in subgraph.nodes(data=True):
-                    graph.add_node(n, **data)
-                for u, v, data in subgraph.edges(data=True):
-                    graph.add_edge(u, v, **data)
-                graph.add_edge(vertex, require.name, require=require, color='red')
-        """
+                subgraph_printable = Graph.printable_graph(subgraph_, scope=f'{require.name}::')
 
+                for n, data in subgraph_printable.nodes(data=True):
+                    if n not in graph:
+                        printable.add_node(n, **data)
+
+                for u, v, data in subgraph_printable.edges(data=True):
+                    printable.add_edge(u, v, **data)
+
+                printable.add_edge(vertex, require.name, require=require, color='red')
+        return printable
+
+
+    @staticmethod
+    def write_dot(graph: "Graph", output: str):
+        log.debug(f"Graph::write_dot(graph, output='{output}')")
+        graph = Graph.printable_graph(graph)
+        graph.graph['graph'] = {'rankdir': 'BT'}
         nx.drawing.nx_agraph.write_dot(graph, output)

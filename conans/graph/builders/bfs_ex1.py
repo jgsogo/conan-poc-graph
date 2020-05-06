@@ -28,17 +28,15 @@ class BFSBuilderEx1(BFSBuilder):
             color = self.graph.nodes[require.name]['color'] if node_already_in_graph else 'white'
             if require.visibility == Visibility.private or require.context == Context.other:
                 # We need to create a new graph
-                raise NotImplementedError
                 # TODO: This should be a call to bfs_builder
-                print("spawn new graph")
+                log.info(f"=== New subgraph starting from '{vertex}' to '{require.name}'")
                 g = Graph()
                 g.add_edge(vertex, require.name, require=require)
                 builder = BFSBuilderEx1(g, self.provider)
                 builder.run(require.name)
                 g.finish_graph()
-                print(g.nodes())
-                print(require.name)
                 self.graph.add_subgraph(vertex, g, require)
+                log.info(f"=== End subgraph")
                 continue
             else:
                 # It belongs to the 'host' context and it is not private
@@ -99,7 +97,7 @@ class BFSBuilderEx1(BFSBuilder):
         #  conanfile, otherwise we have an ambiguity that should be reported as a conflict.
         candidate_conanfiles: List[ConanFile] = []
         for topo_order in nx.all_topological_sorts(requires_graph):
-            log.info(f"Topological order: f{topo_order}")
+            log.debug(f"Topological order: f{topo_order}")
             requires_given_order: List[Tuple[str, Require]] = []
             for it in topo_order:
                 if it == vertex:  # Optimization

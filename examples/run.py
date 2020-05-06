@@ -44,6 +44,8 @@ if __name__ == '__main__':
                         format='%(name)s (%(levelname)s): %(message)s')
     log = logging.getLogger('conans')
     log.setLevel(max(3 - arguments.verbose_count, 0) * 10)
+    log = logging.getLogger('examples')
+    log.setLevel(max(3 - arguments.verbose_count, 0) * 10)
 
     sys.stdout.write(f"Example to run: {arguments.example}\n")
     graphml = os.path.abspath(

@@ -15,7 +15,10 @@ class BFSBuilder(BaseBuilder):
         I cannot use a standard algorithm, I need mine to modify the 'queue' while I'm
         consuming it
     """
-    _queue: List[str] = []
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._queue: List[str] = []
 
     def _append(self, vertex: str) -> None:
         self._queue.append(vertex)
