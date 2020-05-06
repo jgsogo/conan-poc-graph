@@ -48,5 +48,12 @@
         <edge source="lib4" target="lib3">
             <data key="version">2.0</data>
         </edge>
+        <edge source="lib3" target="lib5">
+            <data key="version">1.0</data>
+        </edge>
+        <edge source="lib3" target="lib6">
+            <data key="version">1.0</data>
+            <data key="visibility">private</data>
+        </edge>
     </graph>
 </graphml>

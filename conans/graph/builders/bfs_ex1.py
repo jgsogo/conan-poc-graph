@@ -31,12 +31,9 @@ class BFSBuilderEx1(BFSBuilder):
                 # We need to create a new graph
                 # TODO: This should be a call to bfs_builder
                 log.info(f"=== New subgraph starting from '{vertex}' to '{require.name}'")
-                g = Graph()
                 conanfile = self.provider.get_conanfile(require.name, [(vertex, require), ])
-                g.add_node(require.name, conanfile=conanfile)
-                builder = BFSBuilderEx1(g, self.provider)
-                builder.run(require.name)
-                g.finish_graph()
+                from . import bfs_builder
+                g = bfs_builder(require.name, provider=self.provider, builder_class=self.__class__, conanfile=conanfile)
                 self.graph.add_subgraph(vertex, g, require)
                 log.info(f"=== End subgraph")
                 continue
