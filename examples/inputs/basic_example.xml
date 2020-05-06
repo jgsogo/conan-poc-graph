@@ -32,35 +32,27 @@
         <node id="lib5"/>
         <node id="lib6"/>
         <edge source="root" target="lib3">
-            <data key="require_type">library</data>
             <data key="version">1.0</data>
         </edge>
         <edge source="root" target="lib4">
-            <data key="require_type">library</data>
             <data key="version">1.0</data>
         </edge>
         <edge source="root" target="lib6">
-            <data key="require_type">library</data>
             <data key="version">1.0</data>
         </edge>
         <edge source="lib3" target="lib2">
-            <data key="require_type">library</data>
             <data key="version">1.0</data>
         </edge>
         <edge source="lib4" target="lib2">
-            <data key="require_type">library</data>
             <data key="version">1.0</data>
         </edge>
         <edge source="lib6" target="lib5">
-            <data key="require_type">library</data>
             <data key="version">1.0</data>
         </edge>
         <edge source="lib5" target="lib2">
-            <data key="require_type">library</data>
             <data key="version">1.0</data>
         </edge>
         <edge source="lib2" target="lib1">
-            <data key="require_type">library</data>
             <data key="version">1.0</data>
         </edge>
     </graph>
