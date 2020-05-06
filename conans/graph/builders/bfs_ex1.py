@@ -19,6 +19,7 @@ class BFSBuilderEx1(BFSBuilder):
         # the algorithm can keep running
         conanfile = self._get_conanfile(vertex)
         if not conanfile:
+            log.warning(f"No conanfile found for '{vertex}'")
             return
 
         self.graph.nodes[vertex]['conanfile'] = conanfile
@@ -82,11 +83,13 @@ class BFSBuilderEx1(BFSBuilder):
         in_edges = self.graph.in_edges(vertex, data='require')
         # Handle corner-case for the rootnode  # TODO: You can do better
         if not in_edges:
+            log.warning(f"Handle root corner case. It is vertex '{vertex}'")
             return self.provider.get_conanfile(vertex, [])
         requires_graph = self.graph.get_requires_graph()
 
         # if the vertex is not in the requires graph, do not get the conanfile
         if not requires_graph.has_node(vertex):
+            log.debug(f"Vertex '{vertex}' doesn't belong to the requires graph")
             return
 
         # Filter requires by ancestors:

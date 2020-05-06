@@ -49,7 +49,7 @@ class ConanFileExample(ConanFile):
     def get_requires(self) -> List[Require]:
         requires_data = dict()
         for _, target, data in self._graph.out_edges(self.name, data=True):
-            requires_data[target] = self._graph.graph['edge_default']
+            requires_data[target] = self._graph.graph['edge_default'].copy()
             requires_data[target].update(data)
 
         return [self._parse_requires(name=key, data=data) for key, data in requires_data.items()]
