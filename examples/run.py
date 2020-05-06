@@ -1,11 +1,12 @@
+import json
 import os
 import sys
 
 import networkx as nx
-from conans.graph.builders import bfs_builder, BFSBuilderEx1
-import json
-from .utils import ProviderExample
+
 from conans.graph import Graph
+from conans.graph.builders import bfs_builder, BFSBuilderEx1
+from .utils import ProviderExample
 
 
 def main(graphml, jsonfile):
@@ -48,10 +49,8 @@ if __name__ == '__main__':
     log.setLevel(max(3 - arguments.verbose_count, 0) * 10)
 
     sys.stdout.write(f"Example to run: {arguments.example}\n")
-    graphml = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), 'inputs', f'{arguments.example}.xml'))
-    jsonfile = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), 'inputs', f'server.json'))
+    graphml = os.path.abspath(os.path.join(os.path.dirname(__file__), 'inputs', f'{arguments.example}.xml'))
+    jsonfile = os.path.abspath(os.path.join(os.path.dirname(__file__), 'inputs', f'server.json'))
 
     sys.stdout.write(f"Work on file:\n")
     sys.stdout.write(f" - GraphML: '{graphml}'\n")

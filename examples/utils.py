@@ -1,9 +1,10 @@
 import logging
-from collections import defaultdict
 from typing import List, Tuple, Dict
 
 import networkx as nx
-from conans.graph.proxy_types import Require, Provider, RequireType, ConanFile, LibraryType, EdgeType, Visibility, Context
+
+from conans.graph.proxy_types import Require, Provider, RequireType, ConanFile, LibraryType, EdgeType, Visibility, \
+    Context
 
 log = logging.getLogger(__name__)
 

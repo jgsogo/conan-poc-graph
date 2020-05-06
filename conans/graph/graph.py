@@ -1,7 +1,9 @@
-import networkx as nx
 import logging
-from .proxy_types import ConanFile, RequireType, EdgeType, Require
 from collections import defaultdict
+
+import networkx as nx
+
+from .proxy_types import EdgeType
 
 log = logging.getLogger(__name__)
 
@@ -87,7 +89,6 @@ class Graph(nx.DiGraph):
 
                 printable.add_edge(vertex, f"{vertex}::{require.name}", color='red', label=str(require))
         return printable
-
 
     @staticmethod
     def write_dot(graph: "Graph", output: str):

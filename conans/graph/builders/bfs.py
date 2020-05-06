@@ -4,7 +4,6 @@ from typing import List
 import networkx as nx
 
 from .base import BaseBuilder
-from ..proxy_types import Require
 
 log = logging.getLogger(__name__)
 

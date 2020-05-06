@@ -1,14 +1,12 @@
 import logging
-from collections import defaultdict
 from typing import List, Tuple, Dict, Optional
 
 import networkx as nx
 
 from .bfs import BFSBuilder
-from ..proxy_types import RequireType, Require, ConanFile, Visibility, Context, EdgeType
+from ..proxy_types import Require, ConanFile, Visibility, Context
 
 log = logging.getLogger(__name__)
-from ..graph import Graph
 
 
 class BFSBuilderEx1(BFSBuilder):
@@ -48,7 +46,8 @@ class BFSBuilderEx1(BFSBuilder):
         #  prune that branch of the graph just in case this new requirement would have resulted
         #  in a different conanfile.
         if target not in self._queue:
-            self._prune(target, raise_if_pruning=origin)  # TODO: Optimization, check if the new require is going to modify anything (keep this minimal, implement in a child)
+            self._prune(target,
+                        raise_if_pruning=origin)  # TODO: Optimization, check if the new require is going to modify anything (keep this minimal, implement in a child)
             self._append(target)
 
     def _prune(self, vertex: str, raise_if_pruning: str):
